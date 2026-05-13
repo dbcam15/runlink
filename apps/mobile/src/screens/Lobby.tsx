@@ -17,7 +17,7 @@ export function Lobby({ route, navigation }: Props) {
 
   const me = room?.runners.find(r => r.id === myId);
   const others = room?.runners.filter(r => r.id !== myId) ?? [];
-  const allReady = room?.runners.every(r => r.ready) && (room?.runners.length ?? 0) > 1;
+  const allReady = (room?.runners.length ?? 0) > 0 && room?.runners.every(r => r.ready);
 
   useEffect(() => {
     if (room?.runStartedAt) {
@@ -56,9 +56,9 @@ export function Lobby({ route, navigation }: Props) {
         ))}
       </ScrollView>
 
-      {others.length === 0 && (
+      {others.length === 0 && !me?.ready && (
         <View style={styles.waitingBanner}>
-          <Text style={styles.waitingText}>waiting for others to join...</Text>
+          <Text style={styles.waitingText}>tap ready to start solo or share the code to invite others</Text>
         </View>
       )}
 

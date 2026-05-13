@@ -98,7 +98,7 @@ io.on('connection', socket => {
     io.to(currentRoomCode).emit('runner_updated', { runnerId, ready });
 
     const allReady = Array.from(room.runners.values()).every(r => r.ready);
-    if (allReady && room.runners.size > 1) {
+    if (allReady) {
       room.runStartedAt = Date.now();
       io.to(currentRoomCode).emit('run_started', { startedAt: room.runStartedAt });
     }
