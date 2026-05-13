@@ -69,14 +69,18 @@ export function Running({ route, navigation }: Props) {
         style: 'destructive',
         onPress: () => {
           endRun();
-          saveRun({
-            id: `${code}-${startedAt}`,
-            date: startedAt,
-            durationMs: elapsed,
-            distanceMeters: stats.distanceMeters,
-            participants: room?.runners.map(r => r.name) ?? [name],
-            transcript,
-          });
+          try {
+            saveRun({
+              id: `${code}-${startedAt}`,
+              date: startedAt,
+              durationMs: elapsed,
+              distanceMeters: stats.distanceMeters,
+              participants: room?.runners.map(r => r.name) ?? [name],
+              transcript,
+            });
+          } catch (e) {
+            console.warn('saveRun failed (SQLite may not be available)', e);
+          }
           navigation.replace('PostRun', {
             durationMs: elapsed,
             distanceMeters: stats.distanceMeters,

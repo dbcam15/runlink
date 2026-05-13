@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export function useTranscription(
-  active: boolean,
-  onResult: (text: string) => void,
-) {
+export function useTranscription(active: boolean, onResult: (text: string) => void) {
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
 
@@ -13,28 +10,31 @@ export function useTranscription(
     let Voice: any;
     try {
       Voice = require('@react-native-voice/voice').default;
-      if (!Voice) return;
     } catch {
-      // native module not available in Expo Go — transcription disabled
       return;
     }
 
-    Voice.onSpeechResults = (e: any) => {
-      const text = e.value?.[0];
-      if (text) onResultRef.current(text);
-    };
-
-    Voice.onSpeechEnd = () => {
-      Voice.start('en-US').catch(() => {});
-    };
-
-    Voice.start('en-US').catch(() => {});
+    // native module may exist as a JS stub but not be linked — guard every call
+    try {
+      Voice.onSpeechResults = (e: any) => {
+        const text = e.value?.[0];
+        if (text) onResultRef.current(text);
+      };
+      Voice.onSpeechEnd = () => {
+        try { Voice.start('en-US'); } catch {}
+      };
+      Voice.start('en-US');
+    } catch {
+      return;
+    }
 
     return () => {
-      Voice.stop();
-      Voice.destroy().catch(() => {});
-      Voice.onSpeechResults = undefined;
-      Voice.onSpeechEnd = undefined;
+      try {
+        Voice.stop();
+        Voice.destroy();
+        Voice.onSpeechResults = undefined;
+        Voice.onSpeechEnd = undefined;
+      } catch {}
     };
   }, [active]);
 }
