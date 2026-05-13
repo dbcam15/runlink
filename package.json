@@ -1,7 +1,7 @@
 {
   "name": "runlink",
   "private": true,
-  "workspaces": ["apps/server", "apps/mobile"],
+  "workspaces": ["apps/server"],
   "scripts": {
     "server": "npm run dev --workspace=apps/server",
     "mobile": "npm run start --workspace=apps/mobile"
