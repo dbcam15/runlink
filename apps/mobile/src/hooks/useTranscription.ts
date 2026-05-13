@@ -1,5 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
-import Voice, { SpeechResultsEvent } from '@react-native-voice/voice';
+import { useEffect, useRef } from 'react';
 
 export function useTranscription(
   active: boolean,
@@ -11,13 +10,21 @@ export function useTranscription(
   useEffect(() => {
     if (!active) return;
 
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
+    let Voice: any;
+    try {
+      Voice = require('@react-native-voice/voice').default;
+      if (!Voice) return;
+    } catch {
+      // native module not available in Expo Go — transcription disabled
+      return;
+    }
+
+    Voice.onSpeechResults = (e: any) => {
       const text = e.value?.[0];
       if (text) onResultRef.current(text);
     };
 
     Voice.onSpeechEnd = () => {
-      // restart continuous recognition
       Voice.start('en-US').catch(() => {});
     };
 
