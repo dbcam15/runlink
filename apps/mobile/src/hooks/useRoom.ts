@@ -14,41 +14,61 @@ export interface RoomState {
   runStartedAt: number | null;
 }
 
+// module-level cache so state survives navigation between screens
+let _room: RoomState | null = null;
+let _myId: string | null = null;
+const _listeners = new Set<() => void>();
+
+function setGlobalRoom(updater: (prev: RoomState | null) => RoomState | null) {
+  _room = updater(_room);
+  _listeners.forEach(fn => fn());
+}
+
+function setGlobalMyId(id: string) {
+  _myId = id;
+}
+
 export function useRoom() {
-  const [room, setRoom] = useState<RoomState | null>(null);
-  const [myId, setMyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [room, setRoom] = useState<RoomState | null>(_room);
+  const [myId, setMyId] = useState<string | null>(_myId);
+
+  // sync local state when global cache changes
+  useEffect(() => {
+    const sync = () => {
+      setRoom(_room);
+      setMyId(_myId);
+    };
+    _listeners.add(sync);
+    return () => { _listeners.delete(sync); };
+  }, []);
 
   useEffect(() => {
     const socket = getSocket();
 
     socket.on('runner_joined', ({ runner }: { runner: RunnerState }) => {
-      setRoom(prev => prev ? { ...prev, runners: [...prev.runners, runner] } : prev);
+      setGlobalRoom(prev => prev ? { ...prev, runners: [...prev.runners, runner] } : prev);
     });
 
     socket.on('runner_left', ({ runnerId }: { runnerId: string }) => {
-      setRoom(prev => prev
+      setGlobalRoom(prev => prev
         ? { ...prev, runners: prev.runners.filter(r => r.id !== runnerId) }
-        : prev,
-      );
+        : prev);
     });
 
     socket.on('runner_updated', ({ runnerId, ready }: { runnerId: string; ready: boolean }) => {
-      setRoom(prev => prev
+      setGlobalRoom(prev => prev
         ? { ...prev, runners: prev.runners.map(r => r.id === runnerId ? { ...r, ready } : r) }
-        : prev,
-      );
+        : prev);
     });
 
     socket.on('runner_speaking', ({ runnerId, speaking }: { runnerId: string; speaking: boolean }) => {
-      setRoom(prev => prev
+      setGlobalRoom(prev => prev
         ? { ...prev, runners: prev.runners.map(r => r.id === runnerId ? { ...r, speaking } : r) }
-        : prev,
-      );
+        : prev);
     });
 
     socket.on('run_started', ({ startedAt }: { startedAt: number }) => {
-      setRoom(prev => prev ? { ...prev, runStartedAt: startedAt } : prev);
+      setGlobalRoom(prev => prev ? { ...prev, runStartedAt: startedAt } : prev);
     });
 
     return () => {
@@ -65,8 +85,9 @@ export function useRoom() {
       const socket = getSocket();
       socket.emit('create_room', { name }, (res: { ok: boolean; code: string; runnerId: string; room: RoomState; error?: string }) => {
         if (!res.ok) return reject(res.error);
+        setGlobalMyId(res.runnerId);
         setMyId(res.runnerId);
-        setRoom(res.room);
+        setGlobalRoom(() => res.room);
         resolve(res.code);
       });
     });
@@ -77,8 +98,9 @@ export function useRoom() {
       const socket = getSocket();
       socket.emit('join_room', { code, name }, (res: { ok: boolean; runnerId: string; room: RoomState; error?: string }) => {
         if (!res.ok) return reject(res.error ?? 'Failed to join');
+        setGlobalMyId(res.runnerId);
         setMyId(res.runnerId);
-        setRoom(res.room);
+        setGlobalRoom(() => res.room);
         resolve();
       });
     });
@@ -86,19 +108,17 @@ export function useRoom() {
 
   const setReady = useCallback((ready: boolean) => {
     getSocket().emit('set_ready', { ready });
-    setRoom(prev => prev
-      ? { ...prev, runners: prev.runners.map(r => r.id === myId ? { ...r, ready } : r) }
-      : prev,
-    );
-  }, [myId]);
+    setGlobalRoom(prev => prev
+      ? { ...prev, runners: prev.runners.map(r => r.id === _myId ? { ...r, ready } : r) }
+      : prev);
+  }, []);
 
   const emitSpeaking = useCallback((speaking: boolean) => {
     getSocket().emit('speaking', { speaking });
-    setRoom(prev => prev
-      ? { ...prev, runners: prev.runners.map(r => r.id === myId ? { ...r, speaking } : r) }
-      : prev,
-    );
-  }, [myId]);
+    setGlobalRoom(prev => prev
+      ? { ...prev, runners: prev.runners.map(r => r.id === _myId ? { ...r, speaking } : r) }
+      : prev);
+  }, []);
 
   const emitTranscript = useCallback((text: string) => {
     getSocket().emit('transcript_entry', { text });
@@ -106,7 +126,9 @@ export function useRoom() {
 
   const endRun = useCallback(() => {
     getSocket().emit('end_run');
+    setGlobalRoom(() => null);
+    _myId = null;
   }, []);
 
-  return { room, myId, error, createRoom, joinRoom, setReady, emitSpeaking, emitTranscript, endRun };
+  return { room, myId, createRoom, joinRoom, setReady, emitSpeaking, emitTranscript, endRun };
 }
