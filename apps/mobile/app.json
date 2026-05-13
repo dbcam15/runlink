@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "RunLink",
+    "slug": "runlink",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0A0A0A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.runlink.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "RunLink uses your microphone to talk with your running crew.",
+        "NSSpeechRecognitionUsageDescription": "RunLink transcribes your run conversations.",
+        "NSLocationWhenInUseUsageDescription": "RunLink tracks your run distance and pace.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "RunLink tracks your run even when the screen is off."
+      }
+    },
+    "plugins": [
+      "expo-location",
+      "@react-native-voice/voice",
+      [
+        "expo-av",
+        { "microphonePermission": "RunLink uses your mic to talk with your crew." }
+      ]
+    ]
+  }
+}
