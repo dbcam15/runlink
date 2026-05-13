@@ -8,6 +8,7 @@ import { useRoom } from '../hooks/useRoom';
 import { useLocation } from '../hooks/useLocation';
 import { useTranscription } from '../hooks/useTranscription';
 import { saveRun } from '../storage/runs';
+import { getSocket } from '../services/socket';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 
@@ -47,7 +48,6 @@ export function Running({ route, navigation }: Props) {
 
   // incoming transcript from other runners
   useEffect(() => {
-    const { getSocket } = require('../services/socket');
     const socket = getSocket();
     socket.on('new_transcript_entry', (entry: { runnerName: string; text: string; timestamp: number }) => {
       setTranscript(prev => [...prev, entry]);

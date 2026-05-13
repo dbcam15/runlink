@@ -1,4 +1,6 @@
+import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,26 +40,28 @@ export default function App() {
   const [initialName, setInitialName] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
-    initDB();
+    try { initDB(); } catch (e) { console.warn('DB init failed', e); }
     AsyncStorage.getItem('runlink_name').then(n => setInitialName(n));
   }, []);
 
   if (initialName === undefined) return null;
 
   return (
-    <NavigationContainer theme={navTheme}>
-      <StatusBar style="light" />
-      <Stack.Navigator
-        screenOptions={{ headerShown: false, animation: 'fade' }}
-        initialRouteName={initialName ? 'Home' : 'NameEntry'}
-      >
-        <Stack.Screen name="NameEntry" component={NameEntry} />
-        <Stack.Screen name="Home" component={Home} initialParams={initialName ? { name: initialName } : undefined} />
-        <Stack.Screen name="Lobby" component={Lobby} />
-        <Stack.Screen name="Running" component={Running} />
-        <Stack.Screen name="PostRun" component={PostRun} />
-        <Stack.Screen name="History" component={History} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer theme={navTheme}>
+        <StatusBar style="light" />
+        <Stack.Navigator
+          screenOptions={{ headerShown: false, animation: 'fade' }}
+          initialRouteName={initialName ? 'Home' : 'NameEntry'}
+        >
+          <Stack.Screen name="NameEntry" component={NameEntry} />
+          <Stack.Screen name="Home" component={Home} initialParams={initialName ? { name: initialName } : undefined} />
+          <Stack.Screen name="Lobby" component={Lobby} />
+          <Stack.Screen name="Running" component={Running} />
+          <Stack.Screen name="PostRun" component={PostRun} />
+          <Stack.Screen name="History" component={History} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
