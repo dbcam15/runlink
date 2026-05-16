@@ -1,5 +1,5 @@
-import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
+import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -46,8 +46,10 @@ export default function App() {
 
   if (initialName === undefined) return null;
 
+  const Wrapper = Platform.OS === 'web' ? View : GestureHandlerRootView;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <Wrapper style={{ flex: 1 }}>
       <NavigationContainer theme={navTheme}>
         <StatusBar style="light" />
         <Stack.Navigator
@@ -62,6 +64,6 @@ export default function App() {
           <Stack.Screen name="History" component={History} />
         </Stack.Navigator>
       </NavigationContainer>
-    </GestureHandlerRootView>
+    </Wrapper>
   );
 }
