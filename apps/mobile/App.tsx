@@ -41,7 +41,11 @@ export default function App() {
 
   useEffect(() => {
     try { initDB(); } catch (e) { console.warn('DB init failed', e); }
-    AsyncStorage.getItem('runlink_name').then(n => setInitialName(n));
+    if (Platform.OS === 'web') {
+      setInitialName(localStorage.getItem('runlink_name'));
+    } else {
+      AsyncStorage.getItem('runlink_name').then(n => setInitialName(n));
+    }
   }, []);
 
   if (initialName === undefined) return null;

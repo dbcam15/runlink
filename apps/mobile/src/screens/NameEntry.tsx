@@ -16,7 +16,11 @@ export function NameEntry({ navigation }: Props) {
   async function proceed() {
     const trimmed = name.trim();
     if (!trimmed) return;
-    await AsyncStorage.setItem('runlink_name', trimmed);
+    if (Platform.OS === 'web') {
+      localStorage.setItem('runlink_name', trimmed);
+    } else {
+      await AsyncStorage.setItem('runlink_name', trimmed);
+    }
     navigation.replace('Home', { name: trimmed });
   }
 
