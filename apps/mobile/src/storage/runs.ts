@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import * as SQLite from 'expo-sqlite';
 
 export interface SavedRun {
   id: string;
@@ -15,31 +15,10 @@ export interface TranscriptEntry {
   timestamp: number;
 }
 
-const isWeb = Platform.OS === 'web';
-
-// Web: localStorage fallback
-const WEB_KEY = 'runlink_runs';
-function webGetRuns(): SavedRun[] {
-  try { return JSON.parse(localStorage.getItem(WEB_KEY) ?? '[]'); } catch { return []; }
-}
-function webSaveRun(run: SavedRun) {
-  const runs = webGetRuns();
-  localStorage.setItem(WEB_KEY, JSON.stringify([run, ...runs]));
-}
-
-// Native: SQLite
-let db: any = null;
-function getDB() {
-  if (!db) {
-    const SQLite = require('expo-sqlite');
-    db = SQLite.openDatabaseSync('runlink.db');
-  }
-  return db;
-}
+const db = SQLite.openDatabaseSync('runlink.db');
 
 export function initDB() {
-  if (isWeb) return;
-  getDB().execSync(`
+  db.execSync(`
     CREATE TABLE IF NOT EXISTS runs (
       id TEXT PRIMARY KEY,
       date INTEGER NOT NULL,
@@ -52,8 +31,7 @@ export function initDB() {
 }
 
 export function saveRun(run: SavedRun) {
-  if (isWeb) { webSaveRun(run); return; }
-  getDB().runSync(
+  db.runSync(
     `INSERT OR REPLACE INTO runs (id, date, duration_ms, distance_meters, participants, transcript)
      VALUES (?, ?, ?, ?, ?, ?)`,
     run.id, run.date, run.durationMs, run.distanceMeters,
@@ -62,9 +40,8 @@ export function saveRun(run: SavedRun) {
 }
 
 export function getRuns(): SavedRun[] {
-  if (isWeb) return webGetRuns();
   try {
-    const rows = getDB().getAllSync<{
+    const rows = db.getAllSync<{
       id: string; date: number; duration_ms: number;
       distance_meters: number; participants: string; transcript: string;
     }>('SELECT * FROM runs ORDER BY date DESC');
@@ -78,9 +55,8 @@ export function getRuns(): SavedRun[] {
 }
 
 export function getRun(id: string): SavedRun | null {
-  if (isWeb) return webGetRuns().find(r => r.id === id) ?? null;
   try {
-    const row = getDB().getFirstSync<{
+    const row = db.getFirstSync<{
       id: string; date: number; duration_ms: number;
       distance_meters: number; participants: string; transcript: string;
     }>('SELECT * FROM runs WHERE id = ?', id);
