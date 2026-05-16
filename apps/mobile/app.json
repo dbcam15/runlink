@@ -5,7 +5,12 @@
     "owner": "dbcampbell2000",
     "version": "1.0.0",
     "orientation": "portrait",
-"userInterfaceStyle": "dark",
+    "userInterfaceStyle": "dark",
+    "platforms": ["ios", "web"],
+    "web": {
+      "bundler": "metro",
+      "backgroundColor": "#0A0A0A"
+    },
     "splash": {
       "backgroundColor": "#0A0A0A"
     },

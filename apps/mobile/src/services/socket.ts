@@ -1,8 +1,10 @@
 import { io, Socket } from 'socket.io-client';
+import { Platform } from 'react-native';
 
-// When testing locally with Expo Go on a real device, use your Mac's local IP (not localhost)
+// Web uses localhost; mobile Expo Go needs the Mac's LAN IP
 const LOCAL_IP = '192.168.99.78';
-const SERVER_URL = __DEV__ ? `http://${LOCAL_IP}:3001` : 'https://runlink-server.fly.dev';
+const DEV_URL = Platform.OS === 'web' ? 'http://localhost:3001' : `http://${LOCAL_IP}:3001`;
+const SERVER_URL = __DEV__ ? DEV_URL : 'https://runlink-server.fly.dev';
 
 let socket: Socket | null = null;
 
