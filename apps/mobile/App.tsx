@@ -13,6 +13,7 @@ import { Running } from './src/screens/Running';
 import { PostRun } from './src/screens/PostRun';
 import { History } from './src/screens/History';
 import { initDB } from './src/storage/runs';
+import { handleOAuthCallback } from './src/services/spotify';
 import { colors } from './src/theme';
 
 export type RootStackParamList = {
@@ -42,6 +43,9 @@ export default function App() {
   useEffect(() => {
     try { initDB(); } catch (e) { console.warn('DB init failed', e); }
     if (Platform.OS === 'web') {
+      // Handle Spotify OAuth callback
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) handleOAuthCallback(code).catch(console.warn);
       setInitialName(localStorage.getItem('runlink_name'));
     } else {
       AsyncStorage.getItem('runlink_name').then(n => setInitialName(n));
